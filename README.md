@@ -11,11 +11,9 @@
 - 下图展示了①需开发的合约核心结构模板，②ethereum-sample文件夹中的合约结构。简单来说，需要实现AM与SDP两个合约，其余都是支撑这两个合约运作的接口和库。
 - 更详细的接口解释可以参考github链接：[区块链桥接组件开发手册 V0 · AntChainOpenLabs/AntChainBridge Wiki](https://github.com/AntChainOpenLabs/AntChainBridge/wiki/区块链桥接组件开发手册-V0)
 
-<img src="C:\Users\saraday\AppData\Roaming\Typora\typora-user-images\image-20251103143938101.png" alt="image-20251103143938101" style="zoom: 50%;" />
+![image-20251103165422501](docs/images/image-20251103143938101.png)
 
-<img src="C:\Users\saraday\AppData\Roaming\Typora\typora-user-images\image-20251103144120071.png" alt="image-20251103144120071" style="zoom: 50%;" />
-
-
+![image-20251103165606321](docs/images/image-20251103165606321.png)
 
 
 
