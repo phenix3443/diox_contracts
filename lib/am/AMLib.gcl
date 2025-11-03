@@ -1,0 +1,187 @@
+import Utils;
+import SizeOf;
+import TypesToBytes;
+import BytesToTypes;
+
+contract AMLib {
+    struct AuthMessage {
+        uint32 version;
+        array<uint8> author;
+        uint32 protocolType;
+        array<uint8> body;
+    }
+    
+    struct MessageFromRelayer {
+        array<uint8> hints;
+        array<uint8> proofData;
+    }
+
+    struct MessageForAM {
+        array<uint8> senderDomain;
+        array<uint8> rawMessage;
+    }
+
+    struct Request {
+        array<uint8> reqID;
+        array<uint8> rawReqBody;
+    }
+
+    struct Proof {
+        Request req;
+        array<uint8> rawRespBody;
+        uint32 errorCode;
+        array<uint8> errorMsg;
+        array<uint8> senderDomain;
+        uint16 version;
+    }    
+
+
+    // function array<uint8> encodeMessageForAM(MessageForAM item) public const{
+    //     return item.serialize();
+    // }
+
+    function AuthMessage decodeAuthMessage(array<uint8> pkg) public const{
+        uint32 offset = pkg.length();
+        AuthMessage amMsg;
+        __debug.print("offset: ", offset);
+
+        // version
+        amMsg.version = BytesToTypes.bytesToUint32(offset, pkg);
+        offset -= 4u32;
+        __debug.print("amMsg.version: ", amMsg.version);
+        __debug.print("offset: ", offset);
+
+        __debug.assert(amMsg.version >= 1u32);
+        __debug.assert(amMsg.version <= 2u32);
+
+        // author
+        BytesToTypes.bytesToBytes32(offset, pkg, amMsg.author);
+        offset -= 32u32;
+        __debug.print("amMsg.author: ", amMsg.author);
+        __debug.print("offset: ", offset);
+
+        // protocolType
+        amMsg.protocolType = BytesToTypes.bytesToUint32(offset, pkg);
+        offset -= 4u32;
+        __debug.print("amMsg.protocolType: ", amMsg.protocolType);
+        __debug.print("offset: ", offset);
+
+        // body
+        if (amMsg.version == 1u32) {
+            BytesToTypes.bytesToSubBytes(offset, pkg, amMsg.body);
+        } else if (amMsg.version == 2u32) {
+            BytesToTypes.varBytesToSubBytes(offset, pkg, amMsg.body);
+        }
+        __debug.print("amMsg.body: ", amMsg.body);
+        __debug.print("offset: ", offset);
+
+        return amMsg;
+    }
+
+    // function array<uint8> encodeProofMessage(Proof item) public const{
+    //     return item.serialize();
+    // }
+
+    // function Proof decodeProofMessage(array<uint8> rawMsg) public const{
+    //     Proof item;
+    //     item.deserialize(rawMsg);
+    //     return item;
+    // }
+    
+    // function array<uint8> encodMessageFromRelayer(MessageFromRelayer item) public const{
+    //     return item.serialize();
+    // }
+
+    // function decodeMessageFromRelayer(array<uint8> rawMsg, MessageFromRelayer r) public const{
+    //     __debug.print(rawMsg);
+    //     r.deserialize(rawMsg);
+    //     __debug.print(r);
+    // }
+
+    function array<uint8> encodeAuthMessage(AuthMessage amMsg) public const {
+        __debug.print("amMsg: ", amMsg);
+        __debug.assert(amMsg.version >= 1u32);
+        __debug.assert(amMsg.version <= 2u32);
+        array<uint8> pkg;
+        if (amMsg.version == 1u32) {
+            pkg = encodeAuthMessageV1(amMsg);
+        } else if (amMsg.version == 2u32) {
+            pkg = encodeAuthMessageV2(amMsg);
+        }
+        return pkg;
+    }
+
+    function array<uint8> encodeAuthMessageV1(AuthMessage amMsg) public const {
+        uint32 bodyLen = SizeOf.sizeOfBytes(amMsg.body);
+        uint32 len = bodyLen + 4u32 + 32u32 + 4u32;
+        
+        array<uint8> pkg;
+        pkg.set_length(len);
+        uint32 offset = len;
+
+        // version
+        TypesToBytes.uint32ToBytes(offset, amMsg.version, pkg);
+        offset -= 4u32;
+
+        // author
+        TypesToBytes.bytes32ToBytes(offset, amMsg.author, pkg);
+        offset -= 32u32;
+
+        // protocolType
+        TypesToBytes.uint32ToBytes(offset, amMsg.protocolType, pkg);
+        offset -= 4u32;
+
+        // body
+        TypesToBytes.bytesToNewBytes(offset, amMsg.body, pkg);
+        offset -= bodyLen;
+
+        return pkg;
+    }
+
+    function array<uint8> encodeAuthMessageV2(AuthMessage amMsg) public const {
+        uint32 bodyLen = amMsg.body.length();
+        __debug.assert(bodyLen <= 0xffffffffu32);
+        uint32 len = bodyLen + 4u32 + 4u32 + 32u32 + 4u32;
+
+        array<uint8> pkg;
+        pkg.set_length(len);
+        uint32 offset = len;
+
+        // version
+        TypesToBytes.uint32ToBytes(offset, amMsg.version, pkg);
+        offset -= 4u32;
+
+        // author
+        TypesToBytes.bytes32ToBytes(offset, amMsg.author, pkg);
+        offset -= 32u32;
+
+        // protocolType
+        TypesToBytes.uint32ToBytes(offset, amMsg.protocolType, pkg);
+        offset -= 4u32;
+
+        // body
+        TypesToBytes.varBytesToNewBytes(offset, amMsg.body, pkg);
+
+        return pkg;
+    }
+
+    // function AuthMessage decodeAuthMessage(array<uint8> rawMsg) public const{
+    //     AuthMessage amMsg;
+    //     amMsg.deserialize(rawMsg);
+    //     return amMsg;
+    // }
+
+
+    // function MessageForAM decode(array<uint8> rawMessage) public const{
+    //     __debug.print(rawMessage);
+    //     // rawMsg --> [struct] MessageFromRelayer
+    //     MessageFromRelayer messageFromRelayer = decodeMessageFromRelayer(rawMessage);
+    //     // MessageFromRelayer.proofData --> [struct] proof --> [bytes] undecoded AM Message
+    //     Proof proof = decodeProofMessage(messageFromRelayer.proofData);
+    //     MessageForAM messageForAM = decodeMessageForAM(proof.rawRespBody);
+    //     messageForAM.senderDomain = proof.senderDomain;
+
+    //     return messageForAM;
+    // }
+
+}

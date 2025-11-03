@@ -1,0 +1,54 @@
+import ISDPMessage;
+import IContractUsingSDP;
+
+contract AppContract implements IContractUsingSDP.IContractUsingSDPV1 {
+
+    @global address owner;
+    @global uint64 sdpContractId;
+    @global address sdpAddress;
+    
+    @global array<uint8> last_uo_msg;
+    @global array<uint8> last_msg;
+
+    @global function on_deploy(address _owner) {
+        owner = _owner;
+        __debug.print("address: ",__address()," id:",__id());
+    }
+
+    @address function setProtocol(uint64 _protocolContractId, address _protocolAddress) public export {
+        __debug.assert(__transaction.get_sender() == owner);
+        relay@global (^_protocolContractId, ^_protocolAddress) {
+            sdpContractId = _protocolContractId;
+            sdpAddress = _protocolAddress;
+            __debug.print("[setProtocol] sdpContractId: ", sdpContractId, " sdpAddress: ", sdpAddress);
+        }
+    }
+
+    @global function recvUnorderedMessage(array<uint8> senderDomain, array<uint8> author, array<uint8> message) public export {
+        __debug.assert(__transaction.get_sender() == sdpAddress);
+        for(uint32 i=0u32; i < message.length(); i++) {
+            last_uo_msg.push(message[i]);
+        }
+        relay@external recvCrosschainMsg(senderDomain, author, message, false);
+    }
+
+    @global function recvMessage(array<uint8> senderDomain, array<uint8> author, array<uint8> message) public export {
+        __debug.assert(__transaction.get_sender() == sdpAddress);
+        for(uint32 i=0u32; i < message.length(); i++) {
+            last_msg.push(message[i]);
+        }
+        relay@external recvCrosschainMsg(senderDomain, author, message, true);
+    }
+
+    @address function sendUnorderedMessage(array<uint8> receiverDomain, array<uint8> receiver, array<uint8> message) public export {
+        // ISDPMessage.ISDPMessageV1 sdp = ISDPMessage.ISDPMessageV1(sdpContractId);
+        // sdp.sendUnorderedMessage(receiverDomain, receiver, message);
+        relay@external sendCrosschainMsg(receiverDomain, receiver, message, false);
+    }
+
+    @address function sendMessage(array<uint8> receiverDomain, array<uint8> receiver, array<uint8> message) public export {
+        // ISDPMessage.ISDPMessageV1 sdp = ISDPMessage.ISDPMessageV1(sdpContractId);
+        // sdp.sendMessage(receiverDomain, receiver, message);
+        relay@external sendCrosschainMsg(receiverDomain, receiver, message, true);
+    }
+}

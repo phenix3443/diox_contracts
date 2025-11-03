@@ -1,0 +1,24 @@
+allocate.address 8
+chain.gaslimit 12800000
+
+chain.deploy @0 ./lib/utils/Utils.gcl
+chain.deploy @0 ./lib/utils/SizeOf.gcl
+chain.deploy @0 ./lib/utils/TypesToBytes.gcl
+chain.deploy @0 ./lib/utils/BytesToTypes.gcl
+// chain.deploy @0 ./interfaces/ISDPMessage.gcl
+chain.deploy @0 ./lib/sdp/SDPLib.gcl
+
+chain.deploy @0 SDPMsg.gcl={_owner:"$@0$"}
+
+SDPMsg.setLocalDomain @0 {domain:[49,50,51,52,53]}
+SDPMsg.setAmContract @0 {_amContractId:81610670081, _amAddress:"0x0000001300300001:contract"}
+chain.run
+
+// SDPMsg.sendMessage @0 {receiverDomain:[49,50,51,52,53], receiverID:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32], message:[1,2,3,4,5], senderID: 81610670081}
+// chain.run
+
+// SDPMsg.sendUnorderedMessage @0 {receiverDomain:[49,50,51,52,53], receiverID:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32], message:[1,2,3,4,5]}
+// chain.run
+
+SDPMsg.recvMessage @0 {senderDomain:[49,50], senderID:[1,2,3,4,5,6], pkg:[1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 255, 255, 255, 255, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 49, 50, 51, 52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5]}
+chain.run

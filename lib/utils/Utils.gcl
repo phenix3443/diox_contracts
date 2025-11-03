@@ -1,0 +1,78 @@
+contract Utils {
+
+    function bool bytesEqual(array<uint8> first, array<uint8> second) public const {
+        if (first.length() != second.length()) {
+            return false;
+        }
+        for (uint32 i = 0u32; i < first.length(); i++) {
+            if (first[i] != second[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function array<uint8> bytesConcat(array<uint8> first, array<uint8> second) public const {
+        array<uint8> ret;
+        for(uint32 i = 0u32;i<first.length();i++)
+        {
+            ret.push(first[i]);
+        }
+            
+        for(uint32 i = 0u32;i<second.length();i++)
+        {
+            ret.push(second[i]);
+        }
+           
+        return ret;
+    }
+
+    function array<uint8> bytesCopy(array<uint8> src) public const {
+        array<uint8> dst;
+        for(uint32 i=0u32; i < src.length(); i++) {
+            dst.push(src[i]);
+        }
+        return dst;
+    }
+
+    function array<uint8> bytesAlign32(array<uint8> src) public const {
+        array<uint8> dst;
+        uint32 len = src.length();
+        uint32 rem = len % 32u32;
+        if (rem == 0u32) {
+            for (uint32 i = 0u32; i < len; i++) {
+                dst.push(src[i]);
+            }
+        } else {
+            uint32 pad_len = 32u32 - rem;
+            for (uint32 i = 0u32; i < len; i++) {
+                dst.push(src[i]);
+            }
+            for (uint32 i = 0u32; i < pad_len; i++) {
+                dst.push(0u8);
+            }
+        }
+        return dst;
+    }
+
+    function array<uint8> uint256ToBytes32(uint256 src) public const {
+        array<uint8> dst;
+        dst.set_length(32u32);
+        for (uint32 i = 32u32; i > 0u32; i--) {
+            uint8 tmp_int = uint8((src >> ((i-1u32) * 8u32)) & 0xFFu8);
+            dst[32u32-i] = tmp_int;
+            // __debug.print("byte ", 32u32-i, ": ", tmp_int);
+        }
+        return dst;
+    }
+
+    function uint256 bytes32ToUint256(array<uint8> src) public const {
+        uint256 dst;
+        uint32 len = src.length();
+        for (uint32 i = 0u32; i < len; i++) {
+            dst = (dst << 8u32) + uint256(src[i]);
+            // __debug.print("byte ", i, ": ", src[i], " dst: ", dst);
+        }
+        return dst;
+    }
+}

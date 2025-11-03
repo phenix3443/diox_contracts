@@ -1,0 +1,34 @@
+import "./Utils.prd" as Utils;
+
+contract TLVUtils {
+
+    struct TLVItem {
+        uint16 tag;
+        uint32 len;
+        array<uint8_t> value;
+    }
+
+    struct LVItem {
+        uint32 len;
+        array<uint8_t> value;
+    }
+
+    struct TLVWithOffset {
+        uint32 offset;
+        TLVItem tlvItem;
+    }
+
+    struct LVWithOffset {
+        uint32 offset;
+        LVItem lvItem;
+    }
+
+    @global function TLVWithOffset parseTLVItem(array<uint8_t> rawData, uint32 offset) public {
+
+    }
+
+    @global function LVWithOffset parseLVItem(array<uint8_t> rawData, uint32 offset) public {
+
+    }
+
+}
