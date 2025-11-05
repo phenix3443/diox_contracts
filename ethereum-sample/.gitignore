@@ -1,0 +1,28 @@
+# Foundry 生成的文件
+out/
+cache/
+broadcast/
+
+# 依赖
+lib/
+
+# 环境变量
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+*.swp
+*.swo
+
+# 日志
+*.log
+
+# 覆盖率报告
+coverage/
+lcov.info
+
