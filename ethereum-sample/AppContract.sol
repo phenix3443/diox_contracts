@@ -97,6 +97,14 @@ contract AppContract is IContractUsingSDP, Ownable {
         return last_msg;
     }
 
+    function getSendMsg(bytes32 receiver) public view returns (bytes[] memory) {
+        return sendMsg[receiver];
+    }
+
+    function getRecvMsg(bytes32 sender) public view returns (bytes[] memory) {
+        return recvMsg[sender];
+    }
+
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
