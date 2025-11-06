@@ -1,5 +1,5 @@
 contract IContractUsingSDP {
-    interface IContractUsingSDPV1 {
+    interface ContractUsingSDPInterface {
         /**
         * @dev SDP contract would call this function to deliver the message from sender contract
         * on sender blockchain. This message sent with no order and in parallel.

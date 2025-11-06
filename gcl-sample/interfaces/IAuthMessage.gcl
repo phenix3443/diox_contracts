@@ -10,7 +10,7 @@ contract IAuthMessage {
  * message and forward it to the specified upper layer protocol contract.
  */
 
-    interface IAuthMessageV1 {
+    interface AuthMessageInterface {
 
         /**
         * @dev Set the SDP contract address for verifying the proof come from outside the blockchain.
@@ -40,7 +40,7 @@ contract IAuthMessage {
         *
         * @param pkg raw cross-chain message submitted by relayer.
         */
-        // @address function recvPkgFromRelayer(array<uint8> pkg) public export;
+        @address function recvPkgFromRelayer(array<uint8> pkg) public;
 
     }
 }

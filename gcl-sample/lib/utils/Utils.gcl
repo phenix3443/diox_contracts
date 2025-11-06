@@ -18,12 +18,12 @@ contract Utils {
         {
             ret.push(first[i]);
         }
-            
+
         for(uint32 i = 0u32;i<second.length();i++)
         {
             ret.push(second[i]);
         }
-           
+
         return ret;
     }
 
@@ -74,5 +74,22 @@ contract Utils {
             // __debug.print("byte ", i, ": ", src[i], " dst: ", dst);
         }
         return dst;
+    }
+
+    function uint32 reverseUint32(uint32 value) public const {
+        uint32 result;
+        result = ((value & 0x000000FFu32) << 24u32) |
+                 ((value & 0x0000FF00u32) << 8u32) |
+                 ((value & 0x00FF0000u32) >> 8u32) |
+                 ((value & 0xFF000000u32) >> 24u32);
+        return result;
+    }
+
+    function address arrayUint8ToAddress(array<uint8> src) public const {
+        // GCL 中 address 类型不支持从 uint256 直接转换
+        // 这里简化实现，直接返回零地址
+        // 实际使用中应该通过其他方式处理地址转换
+        address result;
+        return result;
     }
 }

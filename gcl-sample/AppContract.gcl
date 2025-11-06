@@ -1,0 +1,117 @@
+import SDPMsg;
+import IContractUsingSDP;
+
+contract AppContract implements IContractUsingSDP.ContractUsingSDPInterface {
+
+    @global address owner;
+    @global uint64 sdpContractId;
+    @global address sdpAddress;
+
+    @global array<uint8> last_uo_msg;
+    @global array<uint8> last_msg;
+
+    // 消息存储映射 - 使用 blob 作为 key，因为 GCL 不支持嵌套 array
+    @global map<blob, blob> recvMsgCount;  // author -> message count (serialized)
+    @global map<blob, blob> sendMsgCount;  // receiver -> message count (serialized)
+
+    @global function on_deploy(address _owner) {
+        owner = _owner;
+        // 自动获取 SDPMsg 的合约 ID 和地址
+        sdpContractId = SDPMsg.__id();
+        sdpAddress = SDPMsg.__address();
+        __debug.print("[on_deploy] AppContract deployed - address:", __address(), " id:", __id());
+        __debug.print("[on_deploy] SDP Protocol auto-configured - contractId:", sdpContractId, " address:", sdpAddress);
+    }
+
+    // 注意：SDP 协议已在 on_deploy 中自动配置
+    // 此函数仅用于在需要时重新配置（如 SDP 合约升级）
+    @address function setProtocol(uint64 _protocolContractId, address _protocolAddress) public export {
+        __debug.assert(__transaction.get_sender() == owner);
+        relay@global (^_protocolContractId, ^_protocolAddress) {
+            sdpContractId = _protocolContractId;
+            sdpAddress = _protocolAddress;
+            __debug.print("[setProtocol] SDP Protocol reconfigured - contractId: ", sdpContractId, " address: ", sdpAddress);
+        }
+    }
+
+    // 私有辅助函数：处理接收到的消息
+    @global function _processReceivedMessage(array<uint8> senderDomain, array<uint8> author, array<uint8> message, bool isOrdered) {
+        __debug.assert(__transaction.get_sender() == sdpAddress);
+
+        // 存储最新消息到对应的变量
+        if (isOrdered) {
+            last_msg.set_length(0u32);
+            for(uint32 i=0u32; i < message.length(); i++) {
+                last_msg.push(message[i]);
+            }
+        } else {
+            last_uo_msg.set_length(0u32);
+            for(uint32 i=0u32; i < message.length(); i++) {
+                last_uo_msg.push(message[i]);
+            }
+        }
+
+        // 简化存储：只记录消息数量（完整的消息存储需要更复杂的结构）
+        // 在实际应用中，可以使用事件日志或链下存储
+
+        // 打印事件日志
+        __debug.print("[Event] recvCrosschainMsg - senderDomain:", senderDomain, " author:", author, " message:", message, " isOrdered:", isOrdered);
+    }
+
+    @global function recvUnorderedMessage(array<uint8> senderDomain, array<uint8> author, array<uint8> message) public export {
+        _processReceivedMessage(senderDomain, author, message, false);
+    }
+
+    @global function recvMessage(array<uint8> senderDomain, array<uint8> author, array<uint8> message) public export {
+        _processReceivedMessage(senderDomain, author, message, true);
+    }
+
+    // 私有辅助函数：处理发送消息
+    @address function _processSendMessage(array<uint8> receiverDomain, array<uint8> receiver, array<uint8> message, bool isOrdered) {
+        relay@global (^sdpContractId, ^sdpAddress, ^receiverDomain, ^receiver, ^message, ^isOrdered) {
+            ISDPMessage.SDPMessageInterface sdp = ISDPMessage.SDPMessageInterface(sdpContractId);
+
+            // 调用对应的发送方法
+            if (isOrdered) {
+                sdp.sendMessage(receiverDomain, receiver, message, uint64(__id()));
+            } else {
+                sdp.sendUnorderedMessage(receiverDomain, receiver, message, uint64(__id()));
+            }
+
+            // 简化存储：只记录消息数量（完整的消息存储需要更复杂的结构）
+            // 在实际应用中，可以使用事件日志或链下存储
+        }
+
+        // 打印事件日志
+        __debug.print("[Event] sendCrosschainMsg - receiverDomain:", receiverDomain, " receiver:", receiver, " message:", message, " isOrdered:", isOrdered);
+    }
+
+    @address function sendUnorderedMessage(array<uint8> receiverDomain, array<uint8> receiver, array<uint8> message) public export {
+        _processSendMessage(receiverDomain, receiver, message, false);
+    }
+
+    @address function sendMessage(array<uint8> receiverDomain, array<uint8> receiver, array<uint8> message) public export {
+        _processSendMessage(receiverDomain, receiver, message, true);
+    }
+
+    // Getter 函数
+    @global function array<uint8> last_uo_msg() export const {
+        return last_uo_msg;
+    }
+
+    @global function array<uint8> last_msg() export const {
+        return last_msg;
+    }
+
+    @global function array<uint8> getSendMsg(array<uint8> receiver) export const {
+        // 简化实现：只返回最后发送的消息
+        array<uint8> empty;
+        return empty;
+    }
+
+    @global function array<uint8> getRecvMsg(array<uint8> author) export const {
+        // 简化实现：只返回最后接收的消息
+        array<uint8> empty;
+        return empty;
+    }
+}

@@ -1,0 +1,75 @@
+import Utils;
+import BytesToTypes;
+
+contract TLVUtils {
+
+    struct TLVItem {
+        uint16 tagType;
+        uint32 len;
+        array<uint8> value;
+    }
+
+    struct LVItem {
+        uint32 len;
+        array<uint8> value;
+    }
+
+    struct TLVWithOffset {
+        uint32 offset;
+        TLVItem tlvItem;
+    }
+
+    struct LVWithOffset {
+        uint32 offset;
+        LVItem lvItem;
+    }
+
+    /**
+     * @notice 解析 TLV (Type-Length-Value) 格式的数据项
+     * @param rawData 原始数据
+     * @param offset 开始位置
+     * @return TLVWithOffset 包含解析结果和新的偏移量
+     */
+    function TLVWithOffset parseTLVItem(array<uint8> rawData, uint32 offset) public const {
+        TLVWithOffset result;
+
+        // 读取 tagType (2 bytes, little-endian)
+        result.tlvItem.tagType = BytesToTypes.bytesToUint16(offset + 2u32, rawData);
+        offset += 2u32;
+
+        // 读取 length (4 bytes, little-endian)
+        result.tlvItem.len = BytesToTypes.bytesToUint32(offset + 4u32, rawData);
+        offset += 4u32;
+
+        // 读取 value
+        BytesToTypes.bytesToSubBytes(offset + result.tlvItem.len, rawData, result.tlvItem.value);
+        offset += result.tlvItem.len;
+
+        result.offset = offset;
+
+        return result;
+    }
+
+    /**
+     * @notice 解析 LV (Length-Value) 格式的数据项
+     * @param rawData 原始数据
+     * @param offset 开始位置
+     * @return LVWithOffset 包含解析结果和新的偏移量
+     */
+    function LVWithOffset parseLVItem(array<uint8> rawData, uint32 offset) public const {
+        LVWithOffset result;
+
+        // 读取 length (4 bytes, little-endian)
+        result.lvItem.len = BytesToTypes.bytesToUint32(offset + 4u32, rawData);
+        offset += 4u32;
+
+        // 读取 value
+        BytesToTypes.bytesToSubBytes(offset + result.lvItem.len, rawData, result.lvItem.value);
+        offset += result.lvItem.len;
+
+        result.offset = offset;
+
+        return result;
+    }
+
+}

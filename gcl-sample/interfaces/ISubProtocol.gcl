@@ -1,5 +1,5 @@
 contract ISubProtocol {
-    interface ISubProtocolV1 {
+    interface SubProtocolInterface {
         /**
         * @dev AM contract that want to forward the message to the receiving blockchain need to call this method to send auth message.
         *
@@ -7,14 +7,13 @@ contract ISubProtocol {
         * @param senderID the address of the sender.
         * @param pkg the raw message from AM contract
         */
-        
-        // @global function recvMessage(array<uint8> senderDomain, array<uint8_t> senderID, array<uint8_t> pkg) public;
+        @global function recvMessage(array<uint8> senderDomain, array<uint8> senderID, array<uint8> pkg) public;
 
         /**
         * @dev SDP contract are based on the AuthMessage contract. Here we set the AuthMessage contract address.
         *
         * @param newAmContract the address of the AuthMessage contract.
         */
-        // @global function setAmContract(address newAmContract) public export;
+        @address function setAmContract(uint64 _amContractId, address _amAddress) public;
     }
 }

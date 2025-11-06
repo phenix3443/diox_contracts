@@ -10,6 +10,10 @@ contract BytesToTypes {
         return uint32(bytesToUint(offset, input, 4u32));
     }
 
+    function uint16 bytesToUint16(uint32 offset, array<uint8> input) public const {
+        return uint16(bytesToUint(offset, input, 2u32));
+    }
+
     function uint256 bytesToUint(uint32 offset, array<uint8> input, uint32 len) public const {
         uint256 output;
         for(uint32 i = offset - len; i < offset; i++) {
