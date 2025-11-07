@@ -7,6 +7,7 @@ contract AuthMsg implements IAuthMessage.AuthMessageInterface {
 
     struct SubProtocol {
         uint32 protocolType;
+        uint64 protocolID;
         address protocolAddress;
         bool exist;
     }
@@ -16,6 +17,7 @@ contract AuthMsg implements IAuthMessage.AuthMessageInterface {
 
     @global map<address, SubProtocol> subProtocols;
     @global map<uint32, address> protocolRoutes;
+    @global map<uint32, uint64> protocolIDs;
 
     @global function on_deploy(address _owner, address _relayer) {
         owner = _owner;
@@ -34,29 +36,48 @@ contract AuthMsg implements IAuthMessage.AuthMessageInterface {
 
     // 注意：SDPMsg 会在其 on_deploy 中自动调用此函数注册自己
     // 此函数也可用于注册其他协议或重新配置现有协议
-    @address function setProtocol(uint64 protocolID, address protocolAddress, uint32 protocolType) public export {
+    // GCL 特定版本：需要传递 protocolID 以支持接口调用
+    @address function setProtocol(address protocolAddress, uint32 protocolType) public export {
         __debug.assert(__transaction.get_sender() == owner);
         __debug.assert(!subProtocols[protocolAddress].exist);
-        relay@global (^protocolID, ^protocolAddress, ^protocolType) {
+
+        relay@global (^protocolAddress, ^protocolType) {
             SubProtocol p;
             p.exist = true;
             p.protocolType = protocolType;
+            p.protocolID = 0u64;  // 将在 setProtocolWithID 中设置
             p.protocolAddress = protocolAddress;
             subProtocols[protocolAddress] = p;
             protocolRoutes[protocolType] = protocolAddress;
-            __debug.print("[setProtocol] Protocol registered - type:", protocolType, " id:", protocolID, " address:", protocolAddress);
-            __debug.print("[Event] SubProtocolUpdate - type:", protocolType, " id:", protocolID);
+            __debug.print("[setProtocol] Protocol registered - type:", protocolType, " address:", protocolAddress);
+            __debug.print("[Event] SubProtocolUpdate - type:", protocolType);
         }
     }
 
-    @global function recvFromProtocol(uint64 senderID, array<uint8> message) public export{
+    // GCL 特定函数：设置协议并保存其 ID 以便接口调用
+    @global function setProtocolWithID(uint64 protocolID, address protocolAddress, uint32 protocolType) public export {
+        __debug.assert(!subProtocols[protocolAddress].exist);
+
+        SubProtocol p;
+        p.exist = true;
+        p.protocolType = protocolType;
+        p.protocolID = protocolID;
+        p.protocolAddress = protocolAddress;
+        subProtocols[protocolAddress] = p;
+        protocolRoutes[protocolType] = protocolAddress;
+        protocolIDs[protocolType] = protocolID;
+        __debug.print("[setProtocolWithID] Protocol registered - type:", protocolType, " id:", protocolID, " address:", protocolAddress);
+        __debug.print("[Event] SubProtocolUpdate - type:", protocolType, " id:", protocolID);
+    }
+
+    @global function recvFromProtocol(address senderID, array<uint8> message) public export {
         address protocol = __transaction.get_sender();
         __debug.assert(subProtocols[protocol].exist);
 
         // use version 1 for now
         AMLib.AuthMessage amV1;
         amV1.version = 1u32;
-        amV1.author = Utils.uint256ToBytes32(uint256(senderID));
+        amV1.author = Utils.addressToBytes32(senderID);
         amV1.protocolType = subProtocols[protocol].protocolType;
         amV1.body = Utils.bytesCopy(message);
 
@@ -69,9 +90,12 @@ contract AuthMsg implements IAuthMessage.AuthMessageInterface {
         __debug.assert(__transaction.get_sender() == relayer);
 
         __debug.print("[recvPkgFromRelayer] Received UCP package, length: ", pkg.length());
+        __debug.print("[recvPkgFromRelayer] First 20 bytes: ", pkg);
 
         // 1. 解码 MessageFromRelayer，获取 senderDomain 和 rawResp (AuthMessage bytes)
+        __debug.print("[recvPkgFromRelayer] About to call AMLib.decodeMessageFromRelayer");
         AMLib.DecodeResult dr = AMLib.decodeMessageFromRelayer(pkg);
+        __debug.print("[recvPkgFromRelayer] AMLib.decodeMessageFromRelayer completed");
         __debug.print("[recvPkgFromRelayer] senderDomain: ", dr.senderDomain);
         __debug.print("[recvPkgFromRelayer] rawResp length: ", dr.rawResp.length());
 
@@ -89,8 +113,8 @@ contract AuthMsg implements IAuthMessage.AuthMessageInterface {
 
         // 5. 调用上层协议（SDPMsg）的 recvMessage
         relay@global (^msg, ^dr) {
-            address protocolAddr = protocolRoutes[msg.protocolType];
-            ISubProtocol.SubProtocolInterface sdp = ISubProtocol.SubProtocolInterface(protocolAddr);
+            uint64 protocolID = protocolIDs[msg.protocolType];
+            ISubProtocol.SubProtocolInterface sdp = ISubProtocol.SubProtocolInterface(protocolID);
             sdp.recvMessage(dr.senderDomain, msg.author, msg.body);
         }
 

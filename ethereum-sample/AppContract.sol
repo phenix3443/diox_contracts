@@ -53,7 +53,7 @@ contract AppContract is IContractUsingSDP, Ownable {
 
     function sendUnorderedMessage(string memory receiverDomain, bytes32 receiver, bytes memory message) external {
         ISDPMessage(sdpAddress).sendUnorderedMessage(receiverDomain, receiver, message);
-
+=
         sendMsg[receiver].push(message);
         emit sendCrosschainMsg(receiverDomain, receiver, message, false);
     }

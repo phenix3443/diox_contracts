@@ -26,7 +26,7 @@ contract ISDPMessage {
         @address function sendUnorderedMessage(array<uint8> receiverDomain, array<uint8> receiverID, array<uint8> message, uint64 senderID) public;
 
         /**
-        * @dev Query the current sdp message sequence for the channel identited by `senderDomain`,
+        * @dev Query the current sdp message sequence for the channel identited by `senderDomain`, 
         * `senderID`, `receiverDomain` and `receiverID`.
         *
         * @param senderDomain the domain name of the sending blockchain.

@@ -56,9 +56,10 @@ contract AMLib {
      */
     function DecodeResult decodeMessageFromRelayer(array<uint8> rawMessage) public const {
         uint32 offset = 0u32;
+        __debug.print("[decodeMessageFromRelayer] rawMessage length: ", rawMessage.length());
 
         // 读取 hints length (4 bytes, little-endian)
-        uint32 hintsLen = BytesToTypes.bytesToUint32(offset + 4u32, rawMessage);
+        uint32 hintsLen = BytesToTypes.bytesToUint32(offset, rawMessage);
         offset += 4u32;
         __debug.print("[decodeMessageFromRelayer] hintsLen: ", hintsLen);
 
@@ -66,14 +67,16 @@ contract AMLib {
         offset += hintsLen;
 
         // 读取 proof length (4 bytes, little-endian)
-        uint32 proofLen = BytesToTypes.bytesToUint32(offset + 4u32, rawMessage);
+        uint32 proofLen = BytesToTypes.bytesToUint32(offset, rawMessage);
         offset += 4u32;
         __debug.print("[decodeMessageFromRelayer] proofLen: ", proofLen);
 
         // 读取 proof
         array<uint8> proof;
-        BytesToTypes.bytesToSubBytes(offset + proofLen, rawMessage, proof);
-        __debug.print("[decodeMessageFromRelayer] proof: ", proof);
+        for (uint32 i = 0u32; i < proofLen; i++) {
+            proof.push(rawMessage[offset + i]);
+        }
+        __debug.print("[decodeMessageFromRelayer] proof length: ", proof.length());
 
         // 解码 proof
         return _decodeProof(proof);
@@ -97,17 +100,17 @@ contract AMLib {
                 __debug.print("[_decodeProof] senderDomain: ", proof.senderDomain);
             } else {
                 if (result.tlvItem.tagType == TLV_PROOF_RESPONSE_BODY) {
-                    proof.rawRespBody = Utils.bytesCopy(result.tlvItem.value);
-                    __debug.print("[_decodeProof] rawRespBody length: ", proof.rawRespBody.length());
+                proof.rawRespBody = Utils.bytesCopy(result.tlvItem.value);
+                __debug.print("[_decodeProof] rawRespBody length: ", proof.rawRespBody.length());
                 } else {
                     if (result.tlvItem.tagType == TLV_PROOF_ERROR_CODE) {
-                        proof.errorCode = BytesToTypes.bytesToUint32(4u32, result.tlvItem.value);
+                proof.errorCode = BytesToTypes.bytesToUint32(0u32, result.tlvItem.value);
                     } else {
                         if (result.tlvItem.tagType == TLV_PROOF_ERROR_MSG) {
-                            proof.errorMsg = Utils.bytesCopy(result.tlvItem.value);
+                proof.errorMsg = Utils.bytesCopy(result.tlvItem.value);
                         } else {
                             if (result.tlvItem.tagType == TLV_PROOF_VERSION) {
-                                proof.version = BytesToTypes.bytesToUint16(2u32, result.tlvItem.value);
+                proof.version = BytesToTypes.bytesToUint16(0u32, result.tlvItem.value);
                             }
                         }
                     }
@@ -136,7 +139,7 @@ contract AMLib {
 
         // UDAG Response 格式: [4 bytes status][4 bytes reserved][4 bytes body length (BIG ENDIAN)][body]
         // 读取 body length (big-endian, 需要反转字节序)
-        uint32 bodyLen = BytesToTypes.bytesToUint32(12u32, rawData);
+        uint32 bodyLen = BytesToTypes.bytesToUint32(8u32, rawData);
         // 反转字节序 (从 big-endian 转 little-endian)
         bodyLen = Utils.reverseUint32(bodyLen);
 

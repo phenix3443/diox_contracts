@@ -43,8 +43,13 @@ contract TypesToBytes {
 
     function bytes32ToBytes(uint32 offset, array<uint8> input, array<uint8> output) public const {
         offset -= 32u32;
+        uint32 inputLen = input.length();
         for(uint32 i = 0u32; i < 32u32; i++) {
-            output[offset + i] = input[i];
+            if (i < inputLen) {
+                output[offset + i] = input[i];
+            } else {
+                output[offset + i] = 0u8;  // 填充0
+            }
         }
     }
 
