@@ -107,6 +107,7 @@ contract SDPMsg implements ISDPMessage.SDPMessageInterface, ISubProtocol.SubProt
     }
 
     @global function recvMessage(array<uint8> senderDomain, array<uint8> senderID, array<uint8> pkg) public export {
+        __debug.print("[DEBUG] recvMessage function entry");
         // __debug.assert(__transaction.get_sender() == amAddress);
         // only SDPv1 now
         // uint32 version = SDPLib.getSDPVersionFrom(pkg);
@@ -169,6 +170,12 @@ contract SDPMsg implements ISDPMessage.SDPMessageInterface, ISubProtocol.SubProt
             result.push(localDomain[i]);
         }
         return result;
+    }
+
+    // 简单测试函数
+    @global function uint32 simpleTest() export const {
+        __debug.print("[DEBUG] simpleTest called");
+        return 42u32;
     }
 
     @global function uint32 querySDPMessageSeq(array<uint8> senderDomain, array<uint8> senderID, array<uint8> receiverDomain, array<uint8> receiverID) export const {
