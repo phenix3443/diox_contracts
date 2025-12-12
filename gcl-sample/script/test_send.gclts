@@ -1,0 +1,82 @@
+// 测试脚本 - 发送消息测试
+// 只测试发送功能，不包括接收（接收功能还在调试中）
+
+random.reseed
+allocate.address 8
+chain.gaslimit 12800000
+
+// 部署库文件
+chain.deploy @0 ../lib/utils/Utils.gcl
+chain.deploy @0 ../lib/utils/SizeOf.gcl
+chain.deploy @0 ../lib/utils/TypesToBytes.gcl
+chain.deploy @0 ../lib/utils/BytesToTypes.gcl
+chain.deploy @0 ../lib/utils/TLVUtils.gcl
+chain.deploy @0 ../lib/sdp/SDPLib.gcl
+chain.deploy @0 ../lib/am/AMLib.gcl
+
+// 部署接口文件
+chain.deploy @0 ../interfaces/ISDPMessage.gcl
+chain.deploy @0 ../interfaces/IContractUsingSDP.gcl
+chain.deploy @0 ../interfaces/IAuthMessage.gcl
+chain.deploy @0 ../interfaces/ISubProtocol.gcl
+
+// 部署核心合约
+log.highlight "开始部署核心合约"
+chain.deploy @0 ../AuthMsg.gcl={"_owner": "$@0$", "_relayer": "$@2$"}
+chain.deploy @0 ../SDPMsg.gcl={"_owner": "$@0$"}
+chain.deploy @0 ../AppContract.gcl={"_owner": "$@0$"}
+
+log.highlight "所有合约部署完成，开始测试发送功能"
+
+// 测试数据
+log "===== 测试有序消息发送 ====="
+AppContract.sendMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],  // "445566"
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [72, 101, 108, 108, 111]  // "Hello"
+}
+log "✅ 有序消息发送成功"
+
+// 测试多条消息
+log "===== 测试发送多条消息 ====="
+AppContract.sendMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [77, 115, 103, 49]  // "Msg1"
+}
+
+AppContract.sendMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [77, 115, 103, 50]  // "Msg2"
+}
+
+AppContract.sendMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [77, 115, 103, 51]  // "Msg3"
+}
+log "✅ 多条有序消息发送成功"
+
+// 测试无序消息
+log "===== 测试无序消息发送 ====="
+AppContract.sendUnorderedMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [85, 110, 111, 114, 100, 101, 114, 101, 100]  // "Unordered"
+}
+log "✅ 无序消息发送成功"
+
+// 测试不同发送者
+log "===== 测试不同发送者 ====="
+AppContract.sendMessage @5 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [70, 114, 111, 109, 85, 115, 101, 114, 53]  // "FromUser5"
+}
+log "✅ 不同发送者测试成功"
+
+log.highlight "所有发送测试完成"
+chain.run
+chain.info
+

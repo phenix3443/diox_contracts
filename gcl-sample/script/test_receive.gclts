@@ -1,0 +1,33 @@
+// Test receive message
+random.reseed
+allocate.address 8
+chain.gaslimit 12800000
+
+// Deploy all
+chain.deploy @0 ../lib/utils/Utils.gcl
+chain.deploy @0 ../lib/utils/SizeOf.gcl
+chain.deploy @0 ../lib/utils/TypesToBytes.gcl
+chain.deploy @0 ../lib/utils/BytesToTypes.gcl
+chain.deploy @0 ../lib/utils/TLVUtils.gcl
+chain.deploy @0 ../lib/sdp/SDPLib.gcl
+chain.deploy @0 ../lib/am/AMLib.gcl
+chain.deploy @0 ../interfaces/ISDPMessage.gcl
+chain.deploy @0 ../interfaces/IContractUsingSDP.gcl
+chain.deploy @0 ../interfaces/IAuthMessage.gcl
+chain.deploy @0 ../interfaces/ISubProtocol.gcl
+chain.deploy @0 ../AuthMsg.gcl={"_owner": "$@0$", "_relayer": "$@2$"}
+chain.deploy @0 ../SDPMsg.gcl={"_owner": "$@0$"}
+chain.deploy @0 ../AppContract.gcl={"_owner": "$@0$"}
+
+log.highlight "Test receive message"
+
+// UCP package from Testdata.md (correct data)
+AuthMsg.recvPkgFromRelayer @2 {
+    pkg: [0, 0, 0, 0, 0, 0, 1, 44, 0, 0, 38, 1, 0, 0, 5, 0, 20, 1, 0, 0, 0, 0, 14, 1, 0, 0, 0, 0, 8, 1, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 205, 234, 188, 222, 52, 52, 53, 53, 54, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 49, 50, 51, 52, 53, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 164, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 0, 0, 0, 1, 9, 0, 6, 0, 0, 0, 49, 49, 50, 50, 51, 51]
+}
+
+log "Receive test done"
+
+chain.run
+chain.info
+
