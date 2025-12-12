@@ -1,0 +1,54 @@
+// 基础功能测试
+// 测试合约部署和基本配置
+
+random.reseed
+allocate.address 8
+chain.gaslimit 12800000
+
+log.highlight "===== 开始基础功能测试 ====="
+
+// 部署库文件
+log "步骤 1: 部署工具库..."
+chain.deploy @0 ../lib/utils/Utils.gcl
+chain.deploy @0 ../lib/utils/SizeOf.gcl
+chain.deploy @0 ../lib/utils/TypesToBytes.gcl
+chain.deploy @0 ../lib/utils/BytesToTypes.gcl
+chain.deploy @0 ../lib/utils/TLVUtils.gcl
+log "✅ 工具库部署完成"
+
+// 部署协议库
+log "步骤 2: 部署协议库..."
+chain.deploy @0 ../lib/sdp/SDPLib.gcl
+chain.deploy @0 ../lib/am/AMLib.gcl
+log "✅ 协议库部署完成"
+
+// 部署接口
+log "步骤 3: 部署接口..."
+chain.deploy @0 ../interfaces/ISDPMessage.gcl
+chain.deploy @0 ../interfaces/IContractUsingSDP.gcl
+chain.deploy @0 ../interfaces/IAuthMessage.gcl
+chain.deploy @0 ../interfaces/ISubProtocol.gcl
+log "✅ 接口部署完成"
+
+// 部署核心合约
+log "步骤 4: 部署核心合约..."
+chain.deploy @0 ../AuthMsg.gcl={"_owner": "$@0$", "_relayer": "$@2$"}
+log "  ✅ AuthMsg deployed"
+
+chain.deploy @0 ../SDPMsg.gcl={"_owner": "$@0$"}
+log "  ✅ SDPMsg deployed"
+
+chain.deploy @0 ../AppContract.gcl={"_owner": "$@0$"}
+log "  ✅ AppContract deployed"
+
+log.highlight "===== 所有合约部署成功 ====="
+log "说明:"
+log "- AuthMsg 自动配置 owner 和 relayer"
+log "- SDPMsg 自动获取 AuthMsg 并注册到 AuthMsg (protocolType=3)"
+log "- AppContract 自动获取 SDPMsg"
+log "- 所有依赖关系已自动配置完成"
+
+log.highlight "===== 测试完成 ====="
+chain.run
+chain.info
+

@@ -1,0 +1,35 @@
+allocate.address 8
+chain.gaslimit 12800000
+
+chain.deploy @0 ../lib/utils/Utils.gcl
+chain.deploy @0 ../lib/utils/SizeOf.gcl
+chain.deploy @0 ../lib/utils/TypesToBytes.gcl
+chain.deploy @0 ../lib/utils/BytesToTypes.gcl
+chain.deploy @0 ../lib/utils/TLVUtils.gcl
+chain.deploy @0 ../lib/am/AMLib.gcl
+chain.deploy @0 ../lib/sdp/SDPLib.gcl
+
+chain.deploy @0 ../interfaces/IAuthMessage.gcl
+chain.deploy @0 ../interfaces/ISubProtocol.gcl
+chain.deploy @0 ../interfaces/ISDPMessage.gcl
+chain.deploy @0 ../interfaces/IContractUsingSDP.gcl
+chain.deploy @0 ../AuthMsg.gcl={_owner:"$@0$", _relayer:"$@1$"}
+chain.deploy @0 ../SDPMsg.gcl={_owner:"$@0$"}
+
+log.highlight "Test SDPMsg contract"
+
+log "Test 1: setLocalDomain"
+SDPMsg.setLocalDomain @0 {domain:[49,50,51,52,53]}
+
+log "Test 2: setAmContract"
+SDPMsg.setAmContract @0 {_amContractId:81610670081, _amAddress:"0x0000001300300001:contract"}
+
+log "Test 3: recvMessage (需要正确的 pkg 格式，暂时跳过)"
+// 注意：recvMessage 需要正确格式的 pkg 数据
+// pkg 格式：从末尾向前读取 domain长度+domain, receiver(32), sequence(4), message长度+message
+// 由于构造正确的 pkg 数据较复杂，此测试在 test_receive.gclts 中已完整测试
+// SDPMsg.recvMessage #g {senderDomain:[49,50], senderID:[1,2,3,4,5,6], pkg:[...]}
+
+log "SDPMsg test done"
+
+chain.run

@@ -1,0 +1,62 @@
+random.reseed
+allocate.address 8
+chain.gaslimit 12800000
+
+// 部署库文件 (AppContract 的依赖)
+chain.deploy @0 ../lib/utils/Utils.gcl
+chain.deploy @0 ../lib/utils/SizeOf.gcl
+chain.deploy @0 ../lib/utils/TypesToBytes.gcl
+chain.deploy @0 ../lib/utils/BytesToTypes.gcl
+chain.deploy @0 ../lib/utils/TLVUtils.gcl
+chain.deploy @0 ../lib/sdp/SDPLib.gcl
+chain.deploy @0 ../lib/am/AMLib.gcl
+
+// 部署接口文件
+chain.deploy @0 ../interfaces/ISDPMessage.gcl
+chain.deploy @0 ../interfaces/IContractUsingSDP.gcl
+chain.deploy @0 ../interfaces/IAuthMessage.gcl
+chain.deploy @0 ../interfaces/ISubProtocol.gcl
+
+// 部署核心合约 (按依赖顺序)
+// 注意：部署顺序很重要，因为后面的合约会在 on_deploy 中自动引用前面的合约
+chain.deploy @0 ../AuthMsg.gcl={"_owner": "$@0$", "_relayer": "$@2$"}
+chain.deploy @0 ../SDPMsg.gcl={"_owner": "$@0$"}
+chain.deploy @0 ../AppContract.gcl={"_owner": "$@0$"}
+
+log.highlight "所有合约依赖关系已自动配置完成"
+// - SDPMsg 在 on_deploy 中自动：
+//   1. 获取 AuthMsg 的 ID 和地址
+//   2. 调用 AuthMsg.setProtocol 注册自己 (protocolType=3)
+// - AppContract 在 on_deploy 中自动获取 SDPMsg 的 ID 和地址
+
+log.highlight "开始测试"
+
+// 测试发送无序消息
+log "测试 sendUnorderedMessage"
+AppContract.sendUnorderedMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [49, 50, 51, 52, 53, 54]
+}
+// 测试发送有序消息
+log "测试 sendMessage"
+AppContract.sendMessage @4 {
+    receiverDomain: [52, 52, 53, 53, 54, 54],
+    receiver: [171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222],
+    message: [49, 50, 51, 52, 53, 54]
+}
+
+
+log "发送测试完成"
+
+// 测试接收消息 - 使用正确数据 (来自 Testdata.md)
+log "测试接收消息 - 使用真实测试数据 (来自 Testdata.md)"
+AuthMsg.recvPkgFromRelayer @2 {
+    pkg: [0, 0, 0, 0, 0, 0, 1, 44, 0, 0, 38, 1, 0, 0, 5, 0, 20, 1, 0, 0, 0, 0, 14, 1, 0, 0, 0, 0, 8, 1, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 205, 234, 188, 222, 52, 52, 53, 53, 54, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 205, 234, 188, 222, 171, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 49, 50, 51, 52, 53, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 164, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 18, 52, 81, 35, 69, 0, 0, 0, 1, 9, 0, 6, 0, 0, 0, 49, 49, 50, 50, 51, 51]
+}
+
+log "接收测试完成"
+
+log "合约部署和消息发送测试完成"
+chain.run
+chain.info

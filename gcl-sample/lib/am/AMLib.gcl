@@ -58,25 +58,31 @@ contract AMLib {
         uint32 offset = 0u32;
         __debug.print("[decodeMessageFromRelayer] rawMessage length: ", rawMessage.length());
 
-        // 读取 hints length (4 bytes, little-endian)
-        uint32 hintsLen = BytesToTypes.bytesToUint32(offset, rawMessage);
-        offset += 4u32;
+        // 读取 hints length (4 bytes, BIG-ENDIAN 从第0-4字节)
+        // 注意：UCP 包头使用 big-endian!
+        uint32 hintsLen = 0u32;
+        for (uint32 i = 0u32; i < 4u32; i++) {
+            hintsLen = (hintsLen << 8u32) | uint32(rawMessage[offset + i]);
+        }
         __debug.print("[decodeMessageFromRelayer] hintsLen: ", hintsLen);
+        offset += 4u32;
 
         // 跳过 hints
         offset += hintsLen;
 
-        // 读取 proof length (4 bytes, little-endian)
-        uint32 proofLen = BytesToTypes.bytesToUint32(offset, rawMessage);
-        offset += 4u32;
+        // 读取 proof length (4 bytes, BIG-ENDIAN)
+        uint32 proofLen = 0u32;
+        for (uint32 i = 0u32; i < 4u32; i++) {
+            proofLen = (proofLen << 8u32) | uint32(rawMessage[offset + i]);
+        }
         __debug.print("[decodeMessageFromRelayer] proofLen: ", proofLen);
+        offset += 4u32;
 
-        // 读取 proof
+        // 读取 proof (从当前 offset 位置开始)
         array<uint8> proof;
         for (uint32 i = 0u32; i < proofLen; i++) {
             proof.push(rawMessage[offset + i]);
         }
-        __debug.print("[decodeMessageFromRelayer] proof length: ", proof.length());
 
         // 解码 proof
         return _decodeProof(proof);
@@ -97,11 +103,9 @@ contract AMLib {
 
             if (result.tlvItem.tagType == TLV_PROOF_SENDER_DOMAIN) {
                 proof.senderDomain = Utils.bytesCopy(result.tlvItem.value);
-                __debug.print("[_decodeProof] senderDomain: ", proof.senderDomain);
             } else {
                 if (result.tlvItem.tagType == TLV_PROOF_RESPONSE_BODY) {
                 proof.rawRespBody = Utils.bytesCopy(result.tlvItem.value);
-                __debug.print("[_decodeProof] rawRespBody length: ", proof.rawRespBody.length());
                 } else {
                     if (result.tlvItem.tagType == TLV_PROOF_ERROR_CODE) {
                 proof.errorCode = BytesToTypes.bytesToUint32(0u32, result.tlvItem.value);
@@ -138,17 +142,21 @@ contract AMLib {
         __debug.assert(rawData.length() > 12u32);
 
         // UDAG Response 格式: [4 bytes status][4 bytes reserved][4 bytes body length (BIG ENDIAN)][body]
-        // 读取 body length (big-endian, 需要反转字节序)
-        uint32 bodyLen = BytesToTypes.bytesToUint32(8u32, rawData);
+        // 读取 body length (从第8字节开始的4字节，big-endian)
+        // bytesToUint32(offset) 读取 [offset-4, offset)，所以要读取第8-12字节，offset应该是12
+        uint32 bodyLen = BytesToTypes.bytesToUint32(12u32, rawData);
         // 反转字节序 (从 big-endian 转 little-endian)
         bodyLen = Utils.reverseUint32(bodyLen);
 
         __debug.print("[_decodeMsgBodyFromUDAGResp] bodyLen: ", bodyLen);
         __debug.assert(rawData.length() >= 12u32 + bodyLen);
 
-        // 提取 body (从第 12 字节开始)
+        // 提取 body (从第 12 字节开始，长度为 bodyLen)
         array<uint8> body;
-        BytesToTypes.bytesToSubBytes(12u32 + bodyLen, rawData, body);
+        for (uint32 i = 0u32; i < bodyLen; i++) {
+            body.push(rawData[12u32 + i]);
+        }
+        __debug.print("[_decodeMsgBodyFromUDAGResp] Extracted body length: ", body.length());
 
         return body;
     }
